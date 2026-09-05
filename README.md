@@ -1,3 +1,7 @@
+[![DevSecOps Security Scan](https://github.com/naif137/cloud-security-lab/actions/workflows/security-ci.yml/badge.svg)](https://github.com/naif137/cloud-security-lab/actions/workflows/security-ci.yml)
+[![Live Security Dashboard](https://img.shields.io/badge/Live_Dashboard-GitHub_Pages-2ea44f?style=flat&logo=github)](https://naif137.github.io/cloud-security-lab/)
+
+---
 # 🛡️ Automated Cloud Security Operations & DevSecOps Monitoring System
 
 [![Security Score](https://img.shields.io/badge/Security_Score-100%2F100_PASS-10b981?style=for-the-badge&logo=shield)](https://naif137.github.io/cloud-security-lab/)
