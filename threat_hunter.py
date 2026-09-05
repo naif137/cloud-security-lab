@@ -34,7 +34,7 @@ def get_failed_ssh_attempts():
 
 def geolocate_ip(ip):
     try:
-        url = f"http://ip-api.com/json/{ip}?fields=status,country,city,isp"
+        url = f"https://ipwhois.app/json/{ip}?fields=status,country,city,isp"
         req = urllib.request.Request(url, headers={'User-Agent': 'SecurityAuditBot/1.0'})
         with urllib.request.urlopen(req, timeout=3) as response:
             data = json.loads(response.read().decode())

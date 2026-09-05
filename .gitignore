@@ -1,0 +1,11 @@
+# Logs & Local Telemetry
+alerts.log
+*.log
+
+# Generated Reports
+audit_report.html
+
+# Environment & Secrets
+.env
+__pycache__/
+*.pyc

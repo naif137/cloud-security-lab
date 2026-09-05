@@ -1,3 +1,0 @@
-{"timestamp": "2026-09-05 13:19:45", "type": "SSH Brute-Force Detected", "details": {"Attacker IP": "1.1.1.1", "Target Service": "SSH (Port 22)", "Failed Attempts": "8", "Geolocation": "Australia, South Brisbane", "Action Taken": "Blocked via Fail2ban"}}
-{"timestamp": "2026-09-05 13:41:59", "type": "SSH Brute-Force Detected", "details": {"Attacker IP": "1.1.1.1", "Target Service": "SSH (Port 22)", "Failed Attempts": "8", "Geolocation": "Australia, South Brisbane", "Action Taken": "Blocked via Fail2ban"}}
-{"timestamp": "2026-09-05 14:00:01", "type": "SSH Brute-Force Detected", "details": {"Attacker IP": "1.1.1.1", "Target Service": "SSH (Port 22)", "Failed Attempts": "8", "Geolocation": "Australia, South Brisbane", "Action Taken": "Blocked via Fail2ban"}}
