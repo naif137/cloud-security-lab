@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>لوحة المؤشرات الاستثمارية - السوق السعودي</title>
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-main: #0B1120;
+            --card-bg: #1E293B;
+            --card-border: #334155;
+            --text-primary: #F8FAFC;
+            --text-secondary: #94A3B8;
+            --accent-green: #10B981;
+            --accent-blue: #38BDF8;
+            --accent-purple: #818CF8;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Tajawal', sans-serif;
+            background-color: var(--bg-main);
+            color: var(--text-primary);
+            padding: 30px 20px;
+            line-height: 1.5;
+        }
+        .dashboard-container {
+            max-width: 1100px;
+            margin: 0 auto;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--card-border);
+            padding-bottom: 20px;
+            margin-bottom: 25px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+        .header h1 {
+            font-size: 24px;
+            font-weight: 800;
+            background: linear-gradient(90deg, #38BDF8, #818CF8);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .header .meta {
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 16px;
+            margin-bottom: 30px;
+        }
+        .kpi-card {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 14px;
+            padding: 20px;
+            position: relative;
+            overflow: hidden;
+        }
+        .kpi-card::before {
+            content: '';
+            position: absolute;
+            top: 0; right: 0; left: 0; height: 3px;
+            background: var(--accent-blue);
+        }
+        .kpi-card.green::before { background: var(--accent-green); }
+        .kpi-card.purple::before { background: var(--accent-purple); }
+        .kpi-title {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+        }
+        .kpi-value {
+            font-size: 26px;
+            font-weight: 800;
+            color: #FFF;
+        }
+        .kpi-subtext {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-top: 5px;
+        }
+        .table-card {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 14px;
+            overflow: hidden;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+        }
+        .table-header {
+            padding: 18px 24px;
+            border-bottom: 1px solid var(--card-border);
+            font-size: 17px;
+            font-weight: 700;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: right;
+            font-size: 14px;
+        }
+        th {
+            background-color: #162032;
+            color: var(--text-secondary);
+            padding: 14px 20px;
+            font-weight: 600;
+        }
+        td {
+            padding: 16px 20px;
+            border-bottom: 1px solid rgba(51, 65, 85, 0.4);
+        }
+        tr:hover td {
+            background-color: #243248;
+        }
+        .bold { font-weight: 700; }
+        .badge-code {
+            background: #0F172A;
+            color: var(--accent-blue);
+            padding: 2px 8px;
+            border-radius: 6px;
+            font-size: 12px;
+            margin-right: 6px;
+            font-weight: 600;
+        }
+        .highlight { color: var(--accent-blue); font-weight: 700; }
+        .text-green { color: var(--accent-green); font-weight: 700; }
+        .rsi-container {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .rsi-track {
+            width: 70px;
+            height: 6px;
+            background: #334155;
+            border-radius: 3px;
+            overflow: hidden;
+        }
+        .rsi-fill {
+            height: 100%;
+            border-radius: 3px;
+        }
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 700;
+        }
+        .footer-note {
+            margin-top: 25px;
+            font-size: 12px;
+            color: var(--text-secondary);
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard-container">
+        <div class="header">
+            <div>
+                <h1>لوحة المؤشرات الاستثمارية والتجميع الاستراتيجي</h1>
+                <div class="meta">تداول (TASI) • المعايير: الاستثمار في القيمة والنمو المستدام</div>
+            </div>
+            <div class="meta">2026-09-05 | 09:25</div>
+        </div>
+
+        <div class="kpi-grid">
+            <div class="kpi-card green">
+                <div class="kpi-title">أعلى فرصة تجميع هذا الشهر</div>
+                <div class="kpi-value">المراعي</div>
+                <div class="kpi-subtext">RSI: 42.1 (منطقة ارتداد وقاع استثماري)</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-title">الميزانية الشهرية المخصصة</div>
+                <div class="kpi-value">500 <span style="font-size: 16px;">ريال</span></div>
+                <div class="kpi-subtext">تتيح شراء حتى 10 سهم في الخيار الأول</div>
+            </div>
+            <div class="kpi-card purple">
+                <div class="kpi-title">متوسط مكرر الأرباح (P/E) للفرص</div>
+                <div class="kpi-value">19.5x</div>
+                <div class="kpi-subtext">أقل من متوسطات السوق المتضخمة</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-title">استراتيجية الإدارة</div>
+                <div class="kpi-value" style="font-size: 20px; color: var(--accent-blue);">DCA التراكمي</div>
+                <div class="kpi-subtext">شراء دوري وإعادة استثمار التوزيعات</div>
+            </div>
+        </div>
+
+        <div class="table-card">
+            <div class="table-header">الشركات المطابقة لمعايير الاستثمار طويل الأجل</div>
+            <div style="overflow-x: auto;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>الشركة والرمز</th>
+                            <th>السعر الحالي</th>
+                            <th>عدد الأسهم بـ 500 ريال</th>
+                            <th>مكرر الأرباح (P/E)</th>
+                            <th>عائد التوزيع %</th>
+                            <th>مؤشر القوة (RSI 14)</th>
+                            <th>القرار الفني</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        
+    <tr>
+        <td class="bold font-ar">المراعي <span class="badge-code">2280</span></td>
+        <td class="num">47.44 ريال</td>
+        <td class="num highlight">10 أسهم</td>
+        <td class="num">19.36x</td>
+        <td class="num text-green">2.42%</td>
+        <td>
+            <div class="rsi-container">
+                <span>42.1</span>
+                <div class="rsi-track">
+                    <div class="rsi-fill" style="width: 42.1%; background: #10B981;"></div>
+                </div>
+            </div>
+        </td>
+        <td><span class="status-badge" style="background: #10B98120; color: #10B981; border: 1px solid #10B981;">تجميع استثنائي</span></td>
+    </tr>
+    
+    <tr>
+        <td class="bold font-ar">أرامكو السعودية <span class="badge-code">2222</span></td>
+        <td class="num">25.96 ريال</td>
+        <td class="num highlight">19 أسهم</td>
+        <td class="num">15.36x</td>
+        <td class="num text-green">5.23%</td>
+        <td>
+            <div class="rsi-container">
+                <span>43.4</span>
+                <div class="rsi-track">
+                    <div class="rsi-fill" style="width: 43.4%; background: #10B981;"></div>
+                </div>
+            </div>
+        </td>
+        <td><span class="status-badge" style="background: #10B98120; color: #10B981; border: 1px solid #10B981;">تجميع استثنائي</span></td>
+    </tr>
+    
+    <tr>
+        <td class="bold font-ar">الاتصالات السعودية (stc) <span class="badge-code">7010</span></td>
+        <td class="num">43.86 ريال</td>
+        <td class="num highlight">11 أسهم</td>
+        <td class="num">14.87x</td>
+        <td class="num text-green">5.02%</td>
+        <td>
+            <div class="rsi-container">
+                <span>54.9</span>
+                <div class="rsi-track">
+                    <div class="rsi-fill" style="width: 54.9%; background: #3B82F6;"></div>
+                </div>
+            </div>
+        </td>
+        <td><span class="status-badge" style="background: #3B82F620; color: #3B82F6; border: 1px solid #3B82F6;">شراء دوري متوازن</span></td>
+    </tr>
+    
+    <tr>
+        <td class="bold font-ar">معادن <span class="badge-code">1211</span></td>
+        <td class="num">66.80 ريال</td>
+        <td class="num highlight">7 أسهم</td>
+        <td class="num">28.55x</td>
+        <td class="num text-green">0.00%</td>
+        <td>
+            <div class="rsi-container">
+                <span>57.9</span>
+                <div class="rsi-track">
+                    <div class="rsi-fill" style="width: 57.9%; background: #F59E0B;"></div>
+                </div>
+            </div>
+        </td>
+        <td><span class="status-badge" style="background: #3B82F620; color: #3B82F6; border: 1px solid #3B82F6;">شراء دوري متوازن</span></td>
+    </tr>
+    
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="footer-note">
+            تم استخراج وتحليل البيانات تلقائياً عبر المحرك الاستثماري المستقل • مخصصة للأصول والاستثمار طويل الأمد
+        </div>
+    </div>
+</body>
+</html>
