@@ -10,6 +10,8 @@ An enterprise-grade, lightweight Cloud SOC and Host Hardening pipeline for produ
 ---
 
 ## 🏛️ System Architecture
+```mermaid
+flowchart TD
 subgraph Defense [Host Defense & Access]
     UFW --> SSH[SSH Key-Only / Root Disabled]
     SSH -->|Invalid / Brute Force| F2B[Fail2ban Active Drop]
@@ -27,6 +29,7 @@ subgraph Outputs [Live Response & Visualization]
     DISPATCH -->|JSON Events| ALERTS[alerts.log]
     DISPATCH -->|HTML Telemetry| DASH[Live GitHub Pages Dashboard]
 end
+```
 ---
 
 ## 🚀 Core Features
