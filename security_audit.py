@@ -1,147 +1,102 @@
 #!/usr/bin/env python3
-"""
-Advanced Cloud & Linux Security Audit Engine (v2.0)
-Author: Naif Albarqi
-Description: Audits system posture, calculates hardening score (0-100),
-             and generates an interactive executive HTML report.
-"""
-
-import os
 import subprocess
+import datetime
 import socket
-from datetime import datetime
-
-# ANSI Terminal Colors
-CYAN = '\033[96m'
-GREEN = '\033[92m'
-YELLOW = '\033[93m'
-RED = '\033[91m'
-BOLD = '\033[1m'
-RESET = '\033[0m'
 
 def run_cmd(cmd):
     try:
-        res = subprocess.run(cmd, shell=True, capture_output=True, text=True)
+        res = subprocess.run(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, timeout=5)
         return res.stdout.strip()
     except Exception:
         return ""
 
-def main():
-    banner = f"""{CYAN}{BOLD}
-   ____ _                 _   ____                            _ _         
-  / ___| | ___  _   _  __| | / ___|  ___  ___ _   _ _ __(_) |_ _   _ 
- | |   | |/ _ \| | | |/ _` | \___ \ / _ \/ __| | | | '__| | __| | | |
- | |___| | (_) | |_| | (_| |  ___) |  __/ (__| |_| | |  | | |_| |_| |
-  \____|_|\___/ \__,_|\__,_| |____/ \___|\___|\__,_|_|  |_|\__|\__, |
-                                                               |___/ 
-        {YELLOW}>>> Linux Hardening & Posture Assessment Engine <<<{RESET}
-    """
-    print(banner)
+def audit_firewall():
+    out = run_cmd("sudo ufw status")
+    if "Status: active" in out:
+        return "PASS", "ACTIVE", "UFW is active and filtering inbound traffic."
+    return "FAIL", "INACTIVE", "Firewall is inactive. Run 'sudo ufw enable'."
+
+def audit_ssh_root():
+    out = run_cmd("sudo sshd -T 2>/dev/null | grep -i '^permitrootlogin'")
+    if "permitrootlogin no" in out.lower():
+        return "PASS", "ENFORCED", "Direct root SSH access is strictly disabled."
+    # فحص احتياطي مباشر من الملفات
+    conf_check = run_cmd("grep -ri '^PermitRootLogin no' /etc/ssh/")
+    if conf_check:
+        return "PASS", "ENFORCED", "Direct root SSH access is strictly disabled."
+    return "WARN", "PERMISSIVE", "Direct root login might be permitted over SSH."
+
+def audit_ssh_auth():
+    out = run_cmd("sudo sshd -T 2>/dev/null | grep -i '^passwordauthentication'")
+    if "passwordauthentication no" in out.lower():
+        return "PASS", "KEYS_ONLY", "Cryptographic key-based authentication enforced."
+    # فحص احتياطي مباشر من الملفات
+    conf_check = run_cmd("grep -ri '^PasswordAuthentication no' /etc/ssh/")
+    if conf_check:
+        return "PASS", "KEYS_ONLY", "Cryptographic key-based authentication enforced."
+    return "WARN", "ALLOW_PASSWORDS", "Password authentication enabled; susceptible to brute-force."
+
+def audit_ports():
+    out = run_cmd("ss -tuln")
+    risky = [p for p in [":21 ", ":23 ", ":25 "] if p in out]
+    if not risky:
+        return "PASS", "CLEAN", "No risky legacy ports detected."
+    return "WARN", f"EXPOSED {len(risky)}", f"High risk legacy ports found: {', '.join(risky)}"
+
+def audit_fail2ban():
+    out = run_cmd("sudo fail2ban-client status sshd 2>/dev/null")
+    if "Status for the jail: sshd" in out:
+        banned = "0"
+        for line in out.splitlines():
+            if "Currently banned:" in line:
+                banned = line.split(":")[-1].strip()
+        return "PASS", "ACTIVE", f"Fail2ban is actively guarding SSH. Currently banned IPs: {banned}."
+    return "WARN", "INACTIVE", "Fail2ban is not active on sshd service."
+
+def generate_report():
+    checks = [
+        {"name": "Firewall Protection (UFW)", "func": audit_firewall, "weight": 20},
+        {"name": "SSH Root Login Policy", "func": audit_ssh_root, "weight": 20},
+        {"name": "SSH Key-Only Auth", "func": audit_ssh_auth, "weight": 20},
+        {"name": "Intrusion Prevention (Fail2ban)", "func": audit_fail2ban, "weight": 20},
+        {"name": "Network Attack Surface", "func": audit_ports, "weight": 20}
+    ]
+
+    total_score = 0
+    results = []
+    print("\n--- [ Running Hardening Posture Engine ] ---")
+    for c in checks:
+        status, val, desc = c["func"]()
+        score = c["weight"] if status == "PASS" else (c["weight"] // 2 if status == "WARN" else 0)
+        total_score += score
+        results.append({
+            "control": c["name"],
+            "result": status,
+            "status": val,
+            "desc": desc
+        })
+        print(f"[{status}] {c['name']}: {val}")
 
     hostname = socket.gethostname()
-    ip_output = run_cmd("hostname -I")
-    ip_addr = ip_output.split()[0] if ip_output else "127.0.0.1"
-    timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    try:
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        s.connect(("8.8.8.8", 80))
+        ip = s.getsockname()[0]
+        s.close()
+    except Exception:
+        ip = "127.0.0.1"
 
-    checks = []
-    total_score = 100
+    now_str = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-    print(f"{BOLD}[*] Target Host:{RESET} {hostname} ({ip_addr})")
-    print(f"{BOLD}[*] Started At:{RESET} {timestamp}\n")
-
-    # 1. Firewall (UFW)
-    ufw = run_cmd("sudo ufw status")
-    if "active" in ufw and "inactive" not in ufw:
-        checks.append(("Firewall Protection (UFW)", "ACTIVE", "PASS", "UFW is active and filtering inbound traffic."))
-    else:
-        checks.append(("Firewall Protection (UFW)", "INACTIVE", "FAIL", "Firewall is disabled or permissive."))
-        total_score -= 25
-
-    # 2. SSH Root Login
-    ssh_root = run_cmd("grep -Ei '^PermitRootLogin' /etc/ssh/sshd_config /etc/ssh/sshd_config.d/* 2>/dev/null")
-    if "no" in ssh_root.lower() or "prohibit-password" in ssh_root.lower():
-        checks.append(("SSH Root Login Policy", "SECURED", "PASS", "Root login over SSH is restricted."))
-    else:
-        checks.append(("SSH Root Login Policy", "PERMISSIVE", "WARN", "Direct root login might be permitted over SSH."))
-        total_score -= 15
-
-    # 3. Password Authentication via SSH
-    ssh_pass = run_cmd("grep -Ei '^PasswordAuthentication' /etc/ssh/sshd_config /etc/ssh/sshd_config.d/* 2>/dev/null")
-    if "no" in ssh_pass.lower():
-        checks.append(("SSH Key-Only Auth", "ENFORCED", "PASS", "Password authentication disabled (Key-based only)."))
-    else:
-        checks.append(("SSH Key-Only Auth", "ALLOW_PASSWORDS", "WARN", "Password authentication enabled; susceptible to brute-force."))
-        total_score -= 15
-
-    # 4. Critical Open Ports
-    open_ports = run_cmd("ss -tuln | grep LISTEN")
-    unnecessary_ports = []
-    for p in ["21", "23", "25", "8080"]:
-        if f":{p} " in open_ports:
-            unnecessary_ports.append(p)
-
-    if not unnecessary_ports:
-        checks.append(("Exposed Legacy Ports", "CLEAN", "PASS", "No risky legacy ports detected."))
-    else:
-        checks.append(("Exposed Legacy Ports", f"EXPOSED: {','.join(unnecessary_ports)}", "FAIL", "Risky services listening on network interfaces."))
-        total_score -= 20
-
-    # 5. Failed Authentication Spikes
-    failed_auth = run_cmd("journalctl -u ssh -n 20 --no-pager 2>/dev/null | grep -i 'failed' | wc -l")
-    failed_count = int(failed_auth) if failed_auth.isdigit() else 0
-    if failed_count < 5:
-        checks.append(("Brute-Force Monitoring", f"{failed_count} failures", "PASS", "Normal authentication activity."))
-    else:
-        checks.append(("Brute-Force Monitoring", f"{failed_count} failures", "WARN", "Elevated authentication failure rate detected."))
-        total_score -= 10
-
-    # 6. Security Patches
-    updates = run_cmd("/usr/lib/update-notifier/apt-check 2>/dev/null")
-    if updates:
-        up_list = updates.split(';')
-        sec_updates = int(up_list[1]) if len(up_list) > 1 and up_list[1].isdigit() else 0
-        if sec_updates == 0:
-            checks.append(("Security Patches", "UP-TO-DATE", "PASS", "All critical security patches are installed."))
-        else:
-            checks.append(("Security Patches", f"{sec_updates} pending", "WARN", "Security patches available."))
-            total_score -= 15
-    else:
-        checks.append(("Security Patches", "CHECK_MANUAL", "INFO", "Automated patch check skipped."))
-
-    total_score = max(0, total_score)
-
-    # Console Output
-    for title, status, res, desc in checks:
-        if res == "PASS":
-            badge = f"{GREEN}[ PASS ]{RESET}"
-        elif res == "WARN":
-            badge = f"{YELLOW}[ WARN ]{RESET}"
-        elif res == "INFO":
-            badge = f"{CYAN}[ INFO ]{RESET}"
-        else:
-            badge = f"{RED}[ FAIL ]{RESET}"
-        print(f"{badge} {BOLD}{title:<30}{RESET} -> {status}")
-
-    print("\n" + "=" * 60)
-    score_color = GREEN if total_score >= 80 else (YELLOW if total_score >= 50 else RED)
-    print(f"{BOLD}FINAL HARDENING SCORE: {score_color}{total_score}/100{RESET}")
-    print("=" * 60)
-
-    generate_html_report(hostname, ip_addr, timestamp, total_score, checks)
-    print(f"\n{CYAN}[+] Interactive executive report generated:{RESET} {BOLD}audit_report.html{RESET}\n")
-
-def generate_html_report(hostname, ip_addr, timestamp, score, checks):
-    color = "#10b981" if score >= 80 else ("#f59e0b" if score >= 50 else "#ef4444")
-    rows = ""
-    for title, status, res, desc in checks:
-        badge_bg = "#064e3b" if res == "PASS" else ("#78350f" if res == "WARN" else ("#0f2942" if res == "INFO" else "#7f1d1d"))
-        badge_fg = "#34d399" if res == "PASS" else ("#fbbf24" if res == "WARN" else ("#38bdf8" if res == "INFO" else "#f87171"))
-        rows += f"""
+    rows_html = ""
+    for r in results:
+        badge_cls = "badge-pass" if r["result"] == "PASS" else ("badge-warn" if r["result"] == "WARN" else "badge-fail")
+        rows_html += f"""
         <tr>
-            <td style="font-weight:700; color:#f8fafc;">{title}</td>
-            <td><span style="background:{badge_bg}; color:{badge_fg}; padding:4px 10px; border-radius:6px; font-weight:800; font-size:12px;">{res}</span></td>
-            <td style="color:#cbd5e1; font-family:monospace;">{status}</td>
-            <td style="color:#94a3b8; font-size:13px;">{desc}</td>
+            <td class="bold">{r['control']}</td>
+            <td><span class="badge {badge_cls}">{r['result']}</span></td>
+            <td><code>{r['status']}</code></td>
+            <td class="desc">{r['desc']}</td>
         </tr>
         """
 
@@ -150,41 +105,48 @@ def generate_html_report(hostname, ip_addr, timestamp, score, checks):
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Security Hardening Report - {hostname}</title>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
+    <title>Security Hardening Report - Naif Albarqi</title>
     <style>
-        * {{ box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; }}
-        body {{ background: #0b1120; color: #f8fafc; padding: 30px 20px; }}
-        .wrapper {{ max-width: 900px; margin: 0 auto; }}
-        .header {{ background: #131d35; border: 1px solid #1e293b; border-radius: 16px; padding: 24px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; box-shadow: 0 10px 30px rgba(0,0,0,0.4); }}
-        .score-box {{ text-align: center; background: #0b1120; border: 2px solid {color}; border-radius: 16px; padding: 16px 24px; }}
-        .score-num {{ font-size: 40px; font-weight: 800; color: {color}; line-height: 1; }}
-        .score-lbl {{ font-size: 11px; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px; margin-top: 4px; }}
-        table {{ width: 100%; border-collapse: collapse; background: #131d35; border: 1px solid #1e293b; border-radius: 16px; overflow: hidden; }}
-        th, td {{ padding: 14px 18px; text-align: left; border-bottom: 1px solid #1e293b; font-size: 14px; }}
-        th {{ background: #18233f; color: #38bdf8; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; }}
+        :root {{ --bg: #0b1120; --card: #0f172a; --border: #1e293b; --text: #f8fafc; --muted: #94a3b8; --green: #10b981; --warn: #f59e0b; --fail: #ef4444; }}
+        body {{ font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: var(--bg); color: var(--text); margin: 0; padding: 40px 20px; }}
+        .container {{ max-width: 960px; margin: 0 auto; }}
+        .header {{ display: flex; justify-content: space-between; align-items: center; background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 30px; margin-bottom: 24px; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.5); }}
+        .title h1 {{ margin: 0 0 8px 0; font-size: 26px; }}
+        .meta {{ color: var(--muted); font-size: 14px; margin-bottom: 12px; }}
+        .pills {{ display: flex; gap: 8px; font-size: 12px; }}
+        .pill {{ background: #1e293b; padding: 4px 10px; border-radius: 6px; border: 1px solid #334155; }}
+        .score-box {{ background: rgba(16,185,129,0.1); border: 2px solid var(--green); border-radius: 12px; padding: 18px 24px; text-align: center; min-width: 130px; }}
+        .score-box .num {{ font-size: 46px; font-weight: 800; color: var(--green); line-height: 1; }}
+        .score-box .lbl {{ font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); margin-top: 4px; }}
+        table {{ width: 100%; border-collapse: collapse; background: var(--card); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; }}
+        th {{ background: #162032; text-align: left; padding: 14px 18px; font-size: 12px; text-transform: uppercase; color: #38bdf8; letter-spacing: 0.5px; }}
+        td {{ padding: 16px 18px; border-bottom: 1px solid var(--border); font-size: 14px; }}
         tr:last-child td {{ border-bottom: none; }}
-        .meta-tag {{ display: inline-block; background: #1e293b; padding: 4px 10px; border-radius: 6px; font-size: 12px; color: #94a3b8; margin-right: 6px; margin-top: 8px; }}
+        .badge {{ display: inline-block; padding: 4px 10px; border-radius: 6px; font-size: 12px; font-weight: 700; text-align: center; }}
+        .badge-pass {{ background: rgba(16,185,129,0.15); color: var(--green); }}
+        .badge-warn {{ background: rgba(245,158,11,0.15); color: var(--warn); }}
+        .bold {{ font-weight: 600; }}
+        code {{ background: #090d16; padding: 3px 6px; border-radius: 4px; color: #38bdf8; font-family: monospace; font-size: 13px; }}
+        .desc {{ color: var(--muted); line-height: 1.4; }}
     </style>
 </head>
 <body>
-    <div class="wrapper">
+    <div class="container">
         <div class="header">
-            <div>
-                <h1 style="font-size:24px; font-weight:800; color:#fff; margin-bottom:4px;">Linux Hardening Audit Report</h1>
-                <p style="color:#94a3b8; font-size:13px;">Automated Posture Assessment by <strong>Naif Albarqi</strong></p>
-                <div>
-                    <span class="meta-tag">Host: {hostname}</span>
-                    <span class="meta-tag">IP: {ip_addr}</span>
-                    <span class="meta-tag">Audit Date: {timestamp}</span>
+            <div class="title">
+                <h1>Linux Hardening Audit Report</h1>
+                <div class="meta">Automated Posture Assessment by <strong>Naif Albarqi</strong></div>
+                <div class="pills">
+                    <span class="pill">Host: {hostname}</span>
+                    <span class="pill">IP: {ip}</span>
+                    <span class="pill">Audit Date: {now_str}</span>
                 </div>
             </div>
             <div class="score-box">
-                <div class="score-num">{score}</div>
-                <div class="score-lbl">Security Score</div>
+                <div class="num">{total_score}</div>
+                <div class="lbl">Security Score</div>
             </div>
         </div>
-
         <table>
             <thead>
                 <tr>
@@ -195,14 +157,19 @@ def generate_html_report(hostname, ip_addr, timestamp, score, checks):
                 </tr>
             </thead>
             <tbody>
-                {rows}
+                {rows_html}
             </tbody>
         </table>
     </div>
 </body>
-</html>"""
+</html>
+"""
     with open("audit_report.html", "w") as f:
         f.write(html)
+    with open("index.html", "w") as f:
+        f.write(html)
+    print(f"\n[+] Assessment Complete. Total Score: {total_score}/100")
+    print("[+] Dashboard exported to audit_report.html & index.html")
 
 if __name__ == "__main__":
-    main()
+    generate_report()
