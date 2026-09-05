@@ -39,11 +39,11 @@
                 <div class="pills">
                     <span class="pill">Host: naif</span>
                     <span class="pill">Private IP: 10.0.2.15</span>
-                    <span class="pill">Timestamp: 2026-09-05 13:13:52</span>
+                    <span class="pill">Timestamp: 2026-09-05 15:01:48</span>
                 </div>
             </div>
             <div class="score-box">
-                <div class="num">100</div>
+                <div class="num">80</div>
                 <div class="lbl">Hardening Score</div>
             </div>
         </div>
@@ -62,9 +62,9 @@
                 
         <tr>
             <td class="bold">Firewall Protection (UFW)</td>
-            <td><span class="badge badge-pass">PASS</span></td>
-            <td><code>ACTIVE</code></td>
-            <td class="desc">UFW is active and filtering inbound traffic.</td>
+            <td><span class="badge badge-fail">FAIL</span></td>
+            <td><code>INACTIVE</code></td>
+            <td class="desc">Firewall is inactive. Run 'sudo ufw enable'.</td>
         </tr>
         
         <tr>
@@ -119,6 +119,12 @@
                 <td class="bold"><code>8.8.8.8</code></td>
                 <td><span class="badge badge-fail">4 Attempts</span></td>
                 <td class="desc">United States, Ashburn (Google LLC)</td>
+            </tr>
+            
+            <tr>
+                <td class="bold"><code>203.0.113.195</code></td>
+                <td><span class="badge badge-fail">2 Attempts</span></td>
+                <td class="desc">United States, New York (TEST-NET-3)</td>
             </tr>
             
             </tbody>
