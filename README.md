@@ -54,6 +54,17 @@ end
 ---
 
 ## 📁 Project Structure
+```text
+.
+├── alert_dispatcher.py   # SOC alerting and webhook pipeline engine
+├── alerts.log            # SIEM-formatted threat event log (JSON/Structured)
+├── audit_report.html     # Raw HTML report generated from the audit run
+├── index.html            # Public web dashboard deployed to GitHub Pages
+├── README.md             # Project documentation and architecture overview
+├── security_audit.py     # Hardening compliance auditor (CIS baseline checks)
+├── soc_monitor.sh        # Scheduled runner and telemetry collector
+└── threat_hunter.py      # Auth-log parser and threat intel investigator
+```
 ---
 
 ## 📊 Live Monitoring Dashboard
