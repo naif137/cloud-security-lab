@@ -10,37 +10,28 @@ An enterprise-grade, lightweight Cloud SOC and Host Hardening pipeline for produ
 ---
 
 ## 🏛️ System Architecture
-+-----------------------------+
-                  |   Inbound Network Traffic   |
-                  +--------------+--------------+
-                                 |
-                                 v
-                    [ UFW Firewall: Strict ]
-                                 |
-                                 v
-                   [ SSH: Key-Only / No Root ]
-                                 |
-             +-------------------+-------------------+
-             |                                       |
-    (Valid SSH Key)                       (Invalid / Brute Force)
-             |                                       |
-             v                                       v
-    [ Authorized Shell ]                   [ Fail2ban Enforcement ]
-                                                     |
-                                                     v
-                                          [ Linux Auth Logs Engine ]
-                                                     |
-                                                     v
-                                         [ Python Threat Hunter ]
-                                         - Extracts Hostile IPs
-                                         - Geolocation & ISP Enrichment
-                                                     |
-                             +-----------------------+-----------------------+
-                             |                                               |
-                             v                                               v
-                 [ Automated Discord Webhook ]                  [ Static HTML Dashboard ]
-                 - Instant Incident Response                    - GitHub Pages CI/CD
-                 - SOC Triage Card                              - Score: 100/100 PASS
+mermaid
+flowchart TD
+subgraph Ingress [Inbound Traffic]
+TRAFFIC[Inbound Network Traffic] --> UFW[UFW Firewall: Strict]
+end
+subgraph Defense [Host Defense & Access]
+    UFW --> SSH[SSH Key-Only / Root Disabled]
+    SSH -->|Invalid / Brute Force| F2B[Fail2ban Active Drop]
+    SSH -->|Authorized Key| SHELL[Authorized Shell Access]
+end
+
+subgraph SOC [SOC Telemetry & Pipeline]
+    LOGS[(Linux Auth Logs)] --> HUNTER[threat_hunter.py\nGeoIP & ISP Telemetry]
+    HUNTER --> DISPATCH[alert_dispatcher.py\nSIEM Engine]
+    AUDIT[security_audit.py\nCIS Hardening Audit] --> DISPATCH
+end
+
+subgraph Outputs [Live Response & Visualization]
+    DISPATCH -->|Webhook Alert| DISCORD[Discord SOC Channel]
+    DISPATCH -->|JSON Events| ALERTS[alerts.log]
+    DISPATCH -->|HTML Telemetry| DASH[Live GitHub Pages Dashboard]
+end
 ---
 
 ## 🚀 Core Features
@@ -64,12 +55,23 @@ An enterprise-grade, lightweight Cloud SOC and Host Hardening pipeline for produ
 
 ---
 
-## 📂 Project Structure
+## 📁 Project Structure
+text
+.
+├── alert_dispatcher.py   # SOC alerting and webhook pipeline engine
+├── alerts.log            # SIEM-formatted threat event log (JSON/Structured)
+├── audit_report.html     # Raw HTML report generated from the audit run
+├── index.html            # Public web dashboard deployed to GitHub Pages
+├── README.md             # Project documentation and architecture overview
+├── security_audit.py     # Hardening compliance auditor (CIS baseline checks)
+├── soc_monitor.sh        # Scheduled runner and telemetry collector
+└── threat_hunter.py      # Auth-log parser and threat intel investigator
 ---
 
 ## 📊 Live Monitoring Dashboard
+
 Explore the live operational posture here:  
-👉 **[Security Operations Dashboard](https://naif137.github.io/cloud-security-lab/)**
+👉 [Security Operations Dashboard](https://naif137.github.io/cloud-security-lab/)
 
 ---
 
